@@ -27,7 +27,7 @@ def get_sp_auth():
         client_id = settings.SPOTIFY_CLIENT_ID,
         client_secret = settings.SPOTIFY_CLIENT_SECRET,
         redirect_uri = settings.SPOTIFY_REDIRECT_URI,
-        scope='playlist-read-private playlist-read-collaborative'
+        scope='user-library-read playlist-read-private playlist-read-collaborative user-read-private'
     )
 
 def index(request):
@@ -105,7 +105,28 @@ def spotify_callback(request):
 
 
             fetched += 50
+        total = 50
+        fetched = 0
+        while total > fetched:
+            songs = sp.current_user_saved_tracks(limit=50, offset=fetched)
+            total = songs['total']
+
+            if len(songs['items']) == 0:
+                songs_fetched += 50
+                continue
         
+            for song in songs['items']:
+                fwriter.writerow([
+                    'Liked Songs',
+                    song['track']['name'],
+                    song['track']['album']['name'],
+                    ', '.join([i['name'] for i in song['track']['artists']])
+                ])
+
+                if os.path.getsize(outfile_path) > settings.SPOTIFY_EXPORT_SIZE_LIMIT:
+                    raise ExportSizeLimitPassed()
+            
+            fetched += 50
 
         outfile.close()
 
@@ -125,7 +146,7 @@ def spotify_callback(request):
             os.remove(outfile_name)
         except:
             pass
-
+        raise e
         if type(e) == ExportSizeLimitPassed:
             return render(request, 'front/error.html', {'title': 'Error during export!', 'error': 'The export size limit was surpassed. You have too many playlists/songs!'})
         
