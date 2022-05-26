@@ -146,7 +146,6 @@ def spotify_callback(request):
             os.remove(outfile_name)
         except:
             pass
-        raise e
         if type(e) == ExportSizeLimitPassed:
             return render(request, 'front/error.html', {'title': 'Error during export!', 'error': 'The export size limit was surpassed. You have too many playlists/songs!'})
         
