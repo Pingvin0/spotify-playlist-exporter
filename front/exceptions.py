@@ -1,0 +1,2 @@
+class ExportSizeLimitPassed(Exception):
+    pass
